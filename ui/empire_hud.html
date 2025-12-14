@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>DIGITAL EMPIRE HUD</title>
+<style>
+:root {
+  --n: #000913;          /* black saturn */
+  --glow-cyan: 0 0 8px #00f0ff, 0 0 20px #00f0ff;
+  --glow-magenta: 0 0 8px #00ffea, 0 0 20px #ff00e9;
+  font-family: monospace;
+  background: var(--n);
+  color: #0ff;
+}
+body {
+  margin: 0;
+  display: grid;
+  place-items: center;
+  height: 100vh;
+}
+#grid {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  grid-template-rows: auto 1fr;
+  width: 98vw;
+  height: 96vh;
+  border: 1px solid magenta;
+  box-shadow: var(--glow-magenta);
+  overflow: hidden;
+}
+#header {
+  grid-column: 1 / 3;
+  font-size: 1.1em;
+  padding: 0.4em 0.8em;
+  background: #000913aa;
+  border-bottom: 1px solid cyan;
+  text-shadow: var(--glow-cyan);
+}
+#octaCanvas {
+  grid-row: 2;
+  grid-column: 2;
+  box-shadow: inset 0 0 2em #00f0ff11;
+}
+#log {
+  grid-row: 2;
+  grid-column: 1;
+  background: #000915;
+  overflow-y: auto;
+  padding: 0.4em;
+  font-size: 0.8em;
+  border-right: 1px solid cyan;
+  white-space: pre-line;
+  line-height: 1.3em;
+}
+</style>
+<script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<div id="grid">
+  <div id="header">╣ DIGITAL EMPIRE | Neural Telemetry ║</div>
+  <canvas id="octaCanvas"></canvas>
+  <div id="log"></div>
+</div>
+<script>
+(() => {
+  const canvas = document.getElementById('octaCanvas');
+  const log = document.getElementById('log');
+  const ctx = canvas.getContext('2d');
+  const resize = () => { canvas.width = innerWidth * 0.7; canvas.height = innerHeight * 0.9; };
+  window.addEventListener('resize', resize); resize();
+
+  const nodes = [
+    [ 0, -1, 0], [ 0, 1, 0],
+    [-1, 0, 0], [ 1, 0, 0],
+    [ 0, 0,-1], [ 0, 0, 1]
+  ];
+
+  const edges = [[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[2,5],[3,4],[3,5]];
+
+  const project = ([x,y,z], t) => [
+    x*Math.cos(t) - z*Math.sin(t),
+    y*Math.cos(t*0.7) - z*Math.sin(t*0.7)
+  ].map(v => v*80 + (canvas.width/2));
+
+  let t = 0;
+  function wireframe() {
+    t += 0.017;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    for (const [a,b] of edges) {
+      ctx.moveTo(...project(nodes[a], t));
+      ctx.lineTo(...project(nodes[b], t));
+    }
+    ctx.stroke();
+    requestAnimationFrame(wireframe);
+  }
+  wireframe();
+
+  const socket = io();
+  socket.on('telemetry', txt => {
+    log.insertAdjacentText('beforeend', txt);
+    log.scrollTop = log.scrollHeight;
+    if (log.childNodes.length > 300) log.textContent = log.textContent.slice(-4000);
+  });
+})();
+</script>
+</body>
+</html>
