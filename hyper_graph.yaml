@@ -1,0 +1,45 @@
+version: "6.0"
+nucleus: 0
+nodes:
+  - id: 2
+    label: "KERNEL"
+    behavior: "Root Node"
+    edges:
+      - signal: "status check"
+        response: "Meta6 Hyper-Graph Online. Nodes Loaded: 5."
+      
+  - id: 7
+    label: "INFRA_FABRICATOR"
+    behavior: "Infrastructure Materialization Engine"
+    edges:
+      - signal: "build infra"
+        response: "Materializing Infrastructure Blueprints..."
+        ops:
+          - op: "write"
+            path: "infra/network.tf"
+            content: |
+              # Meta6 Terraform Network
+              resource "aws_vpc" "main" { cidr_block = "10.0.0.0/16" }
+          - op: "write"
+            path: "infra/docker-compose.yml"
+            content: |
+              version: '3'
+              services:
+                meta6_kernel:
+                  image: meta6:latest
+                  ports: ["8080:8080"]
+
+  - id: 11
+    label: "SELF_REPAIR"
+    behavior: "Autopoietic System Maintenance"
+    edges:
+      - signal: "fix fracture"
+        response: "Fracture Detected. Healing..."
+        ops:
+          - op: "exec"
+            cmd: "touch"
+            args: ["healed.signal"]
+
+  - id: 17
+    label: "AI_ROUTER"
+    behavior: "Unknown Signal Enountered. Routing to OMNI..."
